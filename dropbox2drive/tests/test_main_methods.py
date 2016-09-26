@@ -1,5 +1,7 @@
 import unittest
 
+import main
+
 class TestFileCompare(unittest.TestCase):
     def test(self):
         # for testing purposes we can get one random file.
@@ -11,3 +13,14 @@ class TestFileCompare(unittest.TestCase):
     @staticmethod
     def regular_file_to_class(filename):
         pass  # TODO
+
+
+class TestClassifyFiles(unittest.TestCase):
+    def test(self):
+        files_to_update = []
+        files_to_erase = []
+
+        total_files = files_to_erase.extend(files_to_update)
+        classified = main.classify_files(total_files)
+        self.assertItemsEquals(files_to_update, classified.to_update)
+        self.assertItemsEquals(files_to_erase, classified.to_erase)
