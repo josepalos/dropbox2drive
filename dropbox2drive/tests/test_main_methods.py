@@ -1,6 +1,6 @@
 import unittest
 
-import main
+from dropbox2drive import main
 
 class TestFileCompare(unittest.TestCase):
     def test(self):
@@ -21,6 +21,6 @@ class TestClassifyFiles(unittest.TestCase):
         files_to_erase = []
 
         total_files = files_to_erase.extend(files_to_update)
-        classified = main.classify_files(total_files)
-        self.assertItemsEquals(files_to_update, classified.to_update)
-        self.assertItemsEquals(files_to_erase, classified.to_erase)
+        classified = main.classify_files(total_files, files_to_update)
+        self.assertItemsEqual(files_to_update, classified["to_update"])
+        self.assertItemsEqual(files_to_erase, classified["to_erase"])
