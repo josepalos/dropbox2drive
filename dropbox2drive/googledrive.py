@@ -17,3 +17,8 @@ def update_files(files):
     If the file doesn't exist in the cloud, it's created.
     """
     pass
+
+
+def serialize(file):
+    """Convert the File class data to drive format."""
+    pass
