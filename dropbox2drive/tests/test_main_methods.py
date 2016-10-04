@@ -2,6 +2,8 @@ import unittest
 import datetime
 import tempfile
 import filecmp
+import os
+import random
 from dropbox2drive import main
 
 
@@ -36,8 +38,7 @@ class TestFileCompare(unittest.TestCase):
 
 class TestFileContentIsTheSame(unittest.TestCase):
     def test(self):
-        f = tempfile.NamedTemporaryFile()
-        f.write("\x22\x23\x33\x45\x65\x32\x43\x44")
+        f = getRandomTempFile()
 
         f1 = TestFileCompare.regular_file_to_class(f.name)
         self.assertTrue(filecmp.cmp(f.name, f1.tmp_file.name))
@@ -45,10 +46,28 @@ class TestFileContentIsTheSame(unittest.TestCase):
 
 class TestClassifyFiles(unittest.TestCase):
     def test(self):
-        files_to_update = []
-        files_to_erase = []
+        files_to_update = list([])
+        files_to_erase = list([])
+        for _ in range(random.randint(1, 10)):
+            r = getRandomTempFile()
+            f = TestFileCompare.regular_file_to_class(r.name)
+            files_to_update.append(f)
 
-        total_files = files_to_erase.extend(files_to_update)
-        classified = main.classify_files(total_files, files_to_update)
+        for _ in range(random.randint(1, 10)):
+            r = getRandomTempFile()
+            f = TestFileCompare.regular_file_to_class(r.name)
+            files_to_erase.append(f)
+
+        total_files = list(files_to_erase)
+        total_files.extend(files_to_update)
+
+        classified = main.classify_files(files_to_update, total_files)
         self.assertItemsEqual(files_to_update, classified["to_update"])
         self.assertItemsEqual(files_to_erase, classified["to_erase"])
+
+
+def getRandomTempFile():
+    f = tempfile.NamedTemporaryFile(mode="arb")
+    for _ in range(random.randint(1, 100)):
+        f.write(os.urandom(2))
+    return f
