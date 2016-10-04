@@ -12,7 +12,7 @@ class File(object):
                  name,
                  relative_path,
                  cloud,
-                 original_file,
+                 original_file_stream,
                  last_modified,
                  metadata=None,  # TODO, some common metadata structure
                  ):
@@ -26,7 +26,7 @@ class File(object):
         if not os.path.exists(cloud_dir):
             os.makedirs(cloud_dir)
         self.tmp_file = tempfile.NamedTemporaryFile(dir=cloud_dir)
-        self.tmp_file.write(open(original_file, 'rb').read())
+        self.tmp_file.write(original_file_stream.read())
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
