@@ -43,6 +43,13 @@ class File(object):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    def __repr__(self):
+        return "{}: {} {}".format(
+            self.__class__.__name__,
+            self.name,
+            self.tmp_file
+        )
+
 
 def classify_files(new_file_index, last_file_index):
     """
@@ -58,9 +65,9 @@ def classify_files(new_file_index, last_file_index):
     files = {'to_erase': [], 'to_update': []}
     for f in last_file_index:
         if f in new_file_index:
-            files["to_erase"].append(f)
-        else:
             files["to_update"].append(f)
+        else:
+            files["to_erase"].append(f)
     return files
 
 
