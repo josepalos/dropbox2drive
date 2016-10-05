@@ -26,7 +26,7 @@ class GoogleDrive(object):
         self.parent_directory = parent_directory
         self.service = self._get_service()
         self.folders = {
-            '/': self._get_id_folder(self, parent_directory)
+            '/': self._get_id_folder(parent_directory)
         }
 
     def _get_credentials(self):
@@ -82,13 +82,40 @@ class GoogleDrive(object):
         """
         pass
 
-    def _get_id_folder(self, path):
+    def _get_id_folder(self, path, parent_id=None):
         """
         Return the drive id of the specified folder.
 
         If the folder doesn't exist, it is created.
         """
-        pass
+        current_folder, path_tail = os.path.split(path)
+        if current_folder == "":
+            current_folder = path_tail
+            path_tail = ""
+        page_token = None
+        q = "mimeType = 'application/vnd.google-apps.folder'"
+        if parent_id is not None:
+            q = q + (" and '%s' in parents" % parent_id)
+
+        while True:
+            response = self.service.files() \
+                .list(
+                      orderBy='name',
+                      q=q,
+                      spaces='drive',
+                      fields='nextPageToken, files(id, name)',
+                      pageToken=page_token
+                      ).execute()
+            for file in response.get('files', []):
+                # Process change
+                if file.get('name') == current_folder:
+                    if path_tail == "":
+                        return file.get('id')
+                    else:
+                        return self._get_id_folder(path_tail, file.get('id'))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
 
     def _create_folder(self, path):
         """Create a folder in the drive."""
