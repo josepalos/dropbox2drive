@@ -1,27 +1,62 @@
-def get_files():
-    """Returns a list with the files contained in this cloud system."""
-    pass
+"""Google drive services."""
 
 
-def erase_files(files):
-    """Remove the files in the drive cloud."""
-    pass
+class GoogleDrive(object):
+    """Represents the Drive Cloud service."""
 
+    def __init__(self, parent_directory):
+        self.parent_directory = parent_directory
+        self.folders = {
+            '/': self._getIdFolder(self, parent_directory)
+        }
 
-def update_files(files):
-    """
-    Update the files into google drive from dropbox.
+    def get_files(self):
+        """Returns a list with the files contained in this cloud system."""
+        # if it's a folder (MIME type 'application/vnd.google-apps.folder')
+        # store to self.folders with the relative path as key, id as value
+        pass
 
-    Given a list of files to upload, it checks if the file in the cloud needs
-    to be updated, and then update it if needed.
-    If the file doesn't exist in the cloud, it's created.
-    """
-    pass
+    def erase_files(self, files):
+        """Remove the files in the drive cloud."""
+        pass
 
+    def update_files(self, files):
+        """
+        Update the files into google drive from dropbox.
 
-def serialize(file):
-    """Convert the File class data to drive format."""
-    pass
+        Given a list of files to upload, it checks if the file in the cloud
+        needs to be updated, and then update it if needed.
+        If the file doesn't exist in the cloud, it's created.
+        """
+        pass
+
+    def _getIdFolder(self, path):
+        """Return the drive id of the specified folder."""
+        pass
+
+    def _createFolder(self, path):
+        """Create a folder in the drive."""
+        # From google api docs:
+        # file_metadata = {
+        #  'name' : 'Invoices',
+        #  'mimeType' : 'application/vnd.google-apps.folder'
+        # }
+        # f = drive_service.files().create(body=file_metadata, fields='id').execute()
+        pass
+
+    def _parseMetadata(self, f):
+        """Map the metadata of the File object to drive request format."""
+        pass
+
+    def serialize(self, f):
+        """Convert the File class data to drive format."""
+        return {
+            'body': {
+                'name': f.name,
+                'parents': [self._getIdFolder(f.relative_path)],
+            },
+            'media_body': f.tmp_file
+        }.update(self._parseMetadata(f))
 
 
 """
