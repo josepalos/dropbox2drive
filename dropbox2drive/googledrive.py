@@ -12,11 +12,15 @@ from oauth2client import tools
 SCOPES = 'https://www.googleapis.com/auth/drive'
 CLIENT_SECRET_FILE = 'dropbox2drive-client_secret.json'
 APPLICATION_NAME = 'dropbox2drive'
+"""
 try:
     import argparse
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
+"""
+flags = None  # TODO ~ Check if it's necessary because the above code breaks
+# the discover of unittest.
 
 
 class GoogleDrive(object):
@@ -28,8 +32,6 @@ class GoogleDrive(object):
         self.folders = {}
         self.folders['/'] = self._find_id_or_create([parent_directory])
         del self.folders['/'+parent_directory]
-        print self.folders
-        print "#############################################################\n\n\n"
 
     def _get_credentials(self):
         """Get valid user credentials from storage.
@@ -183,10 +185,7 @@ class GoogleDrive(object):
         f = self.service.files().create(body=folder_metadata, fields='id')\
             .execute()
 
-        print path_bak
-        print "Adding " + '/' + '/'.join(path_bak) + " with key " + f.get('id')
         self.folders['/' + '/'.join(path_bak)] = f.get('id')
-        print "Result is " + f.__str__()
         return f.get('id')
 
     def _parse_metadata(self, f):
@@ -202,20 +201,6 @@ class GoogleDrive(object):
             },
             'media_body': f.tmp_file
         }.update(self._parseMetadata(f))
-
-if __name__ == '__main__':
-    g = GoogleDrive('testing_dropbox2drive')
-    """
-    g._get_id_folder(['mec1', 'mec2', 'mec', 'mec'])
-    print('\n\n')
-    g._create_folder(['mec1', 'mec2', 'mec'])
-    print('\n\n')
-    g._get_id_folder(['mec1', 'mec2', 'mec', 'mec'])
-    """
-    g._find_id_or_create(['jeje', 'ols', 'que ase'])
-    g._find_id_or_create(['dios', 'hola', 'ols', 'jeje'])
-    g._find_id_or_create(['prova'])
-    print g.folders
 
 """
     https://developers.google.com/drive/v2/reference/files
