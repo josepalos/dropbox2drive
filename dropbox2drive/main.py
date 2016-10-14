@@ -74,13 +74,12 @@ def classify_files(new_file_index, last_file_index):
 def main():
     """Main method."""
     # add some config methods to googledrive.py and dropbox.py
-
+    gd = googledrive.GoogleDrive("testing_dropbox2drive")
     new_file_index = dropbox.get_files()
-    last_file_index = googledrive.get_files()
+    last_file_index = gd.get_files()
     files_sorted = classify_files(new_file_index, last_file_index)
-    googledrive.erase_files(files_sorted["to_erase"])
-    googledrive.update_files(files_sorted["to_update"])
-
+    gd.erase_files(files_sorted["to_erase"])
+    gd.update_files(files_sorted["to_update"])
 
 if __name__ == "__main__":
     main()

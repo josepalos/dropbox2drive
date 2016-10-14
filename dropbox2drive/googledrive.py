@@ -25,9 +25,11 @@ class GoogleDrive(object):
     def __init__(self, parent_directory):
         self.parent_directory = parent_directory
         self.service = self._get_service()
-        self.folders = {
-            '/': self._get_id_folder(parent_directory)
-        }
+        self.folders = {}
+        self.folders['/'] = self._find_id_or_create([parent_directory])
+        del self.folders['/'+parent_directory]
+        print self.folders
+        print "#############################################################\n\n\n"
 
     def _get_credentials(self):
         """Get valid user credentials from storage.
@@ -82,18 +84,23 @@ class GoogleDrive(object):
         """
         pass
 
-    def _get_id_folder(self, path, parent_id=None):
+    def _get_id_folder(self, path, parent_id=None, index=0):
         """
         Return the drive id of the specified folder.
 
-        If the folder doesn't exist, it is created.
+        The path must be a list of folders.
+        If the folder or a parent is not found, return None.
         """
-        current_folder, path_tail = os.path.split(path)
-        if current_folder == "":
-            current_folder = path_tail
-            path_tail = ""
+        if parent_id is None:
+            parent_id = self.folders.get('/')
+
+        id_in_map = self.folders.get('/'.join(path[:index+1]))
+        if id_in_map is not None:
+            return id_in_map
+
         page_token = None
         q = "mimeType = 'application/vnd.google-apps.folder'"
+        q = q + ' and trashed = false'
         if parent_id is not None:
             q = q + (" and '%s' in parents" % parent_id)
 
@@ -108,24 +115,79 @@ class GoogleDrive(object):
                       ).execute()
             for file in response.get('files', []):
                 # Process change
-                if file.get('name') == current_folder:
-                    if path_tail == "":
+                if file.get('name') == path[index]:
+                    if index+1 >= len(path):
+                        # add to the mapping
+                        self.folders['/' + '/'.join(path)] = file.get('id')
                         return file.get('id')
-                    else:
-                        return self._get_id_folder(path_tail, file.get('id'))
+
+                    return self._get_id_folder(path, file.get('id'), index+1)
+
             page_token = response.get('nextPageToken', None)
             if page_token is None:
                 break
+        # if the code reaches here, the folder doesn't exists.
+        return None
 
-    def _create_folder(self, path):
-        """Create a folder in the drive."""
+    def _find_id_or_create(self, path, parent_id=None, index=0):
+        parent_id = None
+        for i in range(0, len(path)):
+            id = self._get_id_folder(path, parent_id, i)
+            if id is None:
+                id = self._create_folder(path[:i+1], parent_id)
+            parent_id = id
+        return parent_id
+
+    def _create_folder(self, path, parent_id=None):
+        """
+        Create a folder in the drive.
+
+        Given a path represented as a list of strings, create a folder and its
+        parents recursively. If the list exists, does nothing but returns its
+        id. Also store the folder in the mapping if missing.
+        Returns the id of the folder created.
+        """
         # From google api docs:
         # file_metadata = {
         #  'name' : 'Invoices',
         #  'mimeType' : 'application/vnd.google-apps.folder'
         # }
         # f = drive_service.files().create(body=file_metadata, fields='id').execute()
-        pass
+
+        path_bak = list(path)  # used because the path is modified by pop.
+        # TODO ~ work with this problem rather than copy the var.
+
+        if parent_id is None:
+            parent_id = self.folders['/']
+
+        # check if the folder already exists.
+        fol = self._get_id_folder(path, parent_id)
+        if fol is not None:
+            return fol
+
+        folder = path.pop()
+
+        if len(path) is not 0:
+            # create the parents
+            # The parent_id is updated as the parent of this folder is not the
+            # same as the 'path parent'.
+            parent_id = self._create_folder(path, parent_id)
+
+        # then create the folder
+        folder_metadata = {
+            'name': folder,
+            'mimeType': 'application/vnd.google-apps.folder',
+            'parents': [parent_id],
+        }
+
+        f = self.service.files().create(body=folder_metadata, fields='id')\
+            .execute()
+
+        print path_bak
+        print "Adding " + '/' + '/'.join(path_bak) + " with key " + f.get('id')
+        self.folders['/' + '/'.join(path_bak)] = f.get('id')
+        print "Result is " + f.__str__()
+        return f.get('id')
 
     def _parse_metadata(self, f):
         """Map the metadata of the File object to drive request format."""
@@ -141,6 +203,19 @@ class GoogleDrive(object):
             'media_body': f.tmp_file
         }.update(self._parseMetadata(f))
 
+if __name__ == '__main__':
+    g = GoogleDrive('testing_dropbox2drive')
+    """
+    g._get_id_folder(['mec1', 'mec2', 'mec', 'mec'])
+    print('\n\n')
+    g._create_folder(['mec1', 'mec2', 'mec'])
+    print('\n\n')
+    g._get_id_folder(['mec1', 'mec2', 'mec', 'mec'])
+    """
+    g._find_id_or_create(['jeje', 'ols', 'que ase'])
+    g._find_id_or_create(['dios', 'hola', 'ols', 'jeje'])
+    g._find_id_or_create(['prova'])
+    print g.folders
 
 """
     https://developers.google.com/drive/v2/reference/files
